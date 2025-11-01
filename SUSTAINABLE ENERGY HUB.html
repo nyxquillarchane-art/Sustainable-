@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sustainable Energy Hub</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Poppins', 'sans-serif'],
+                        'display': ['Dancing Script', 'cursive'],
+                    },
+                    colors: {
+                        'forest-green': '#047857', // emerald-700
+                        'light-bg': '#f0fdf4',     // green-50
+                        'dark-text': '#1f2937',    // gray-800
+                        'accent-blue': '#2563eb',  // blue-600
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Smooth scrolling for anchor links */
+        html {
+            scroll-behavior: smooth;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .abstract-bg {
+            background-color: #dbeafe;
+            background-image:
+                radial-gradient(at 20% 80%, hsla(160, 80%, 65%, 0.3) 0px, transparent 50%),
+                radial-gradient(at 80% 10%, hsla(210, 80%, 70%, 0.3) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, hsla(140, 75%, 60%, 0.2) 0px, transparent 50%);
+        }
+        
+        /* --- START: Chatbot CSS --- */
+        .chat-window {
+          transition: all 0.3s ease;
+          transform-origin: bottom right;
+        }
+        .chat-window.hidden {
+          opacity: 0;
+          transform: scale(0.1) translateY(100%);
+          pointer-events: none;
+        }
+        .dot {
+          animation: pulse-dot 1s infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse-dot {
+          0%, 80%, 100% { opacity: 0; }
+          40% { opacity: 1; }
+        }
+        /* --- END: Chatbot CSS --- */
+    </style>
+</head>
+<body class="bg-light-bg text-dark-text font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        //======================================================================
+        // DATA SOURCE
+        // All content for the encyclopedia is managed here.
+        //======================================================================
+
+        const pioneersData = [
+            { name: "Amory Lovins", link: "https://en.wikipedia.org/wiki/Amory_Lovins", title: "Physicist & Energy Visionary" },
+            { name: "Dr. M. Stanley Whittingham", link: "https://en.wikipedia.org/wiki/M._Stanley_Whittingham", title: "Nobel Laureate, Li-ion Batteries" },
+            { name: "Henrik Stiesdal", link: "https://en.wikipedia.org/wiki/Henrik_Stiesdal", title: "Wind Turbine Pioneer" },
+            { name: "Greta Thunberg", link: "https://en.wikipedia.org/wiki/Greta_Thunberg", title: "Climate Activist" },
+        ];
+        
+        const energySourcesData = [
+            // I. Core Generation
+            {
+                id: 'solar-pv', name: 'Solar Photovoltaics (PV)', category: 'Core Generation',
+                svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />`,
+                description: `Solar Photovoltaics (PV) convert sunlight directly into electricity using semiconductor materials. When photons from sunlight strike a solar cell, they excite electrons, creating an electric current. This process, known as the photovoltaic effect, is a silent, emission-free way to generate power. Panels are typically made from silicon and can be installed on rooftops, in large-scale solar farms, or integrated into building materials, making it one of the most versatile and rapidly growing renewable energy sources globally.`,
+                pros: ["Declining costs", "High scalability (from watches to utility-scale farms)", "Low maintenance", "No emissions during operation"],
+                cons: ["Intermittent (requires sun)", "Requires land/space", "Manufacturing is energy-intensive", "Performance depends on weather and location"],
+                metrics: { cost: "$25 - $40", efficiency: "18% - 23%", emissions: "20 - 50 gCO₂eq/kWh", bestUse: "Distributed generation, utility-scale farms in sunny regions." },
+                externalLink: "https://www.energy.gov/eere/solar/how-does-solar-work",
+                personalAction: "Consider installing rooftop solar panels, which can significantly reduce electricity bills and carbon footprint. If installation isn't feasible, explore community solar programs or switch to a utility provider that offers a green energy tariff."
+            },
+            {
+                id: 'wind-energy', name: 'Wind Energy', category: 'Core Generation',
+                svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.75L12 19.25M7.75 8L12 4.75L16.25 8M7.75 16L12 19.25L16.25 16" /><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 12c0 2.9-2.35 5.25-5.25 5.25S6.75 14.9 6.75 12s2.35-5.25 5.25-5.25S17.25 9.1 17.25 12z" />`,
+                description: `Wind energy harnesses the kinetic power of moving air. Large turbines, with blades designed like airplane wings, capture wind, causing them to rotate. This rotation spins a generator, which converts the mechanical energy into electricity. Wind farms can be located onshore in windy areas or offshore, where winds are often stronger and more consistent. It is a mature technology and a major contributor to global renewable electricity production.`,
+                pros: ["Excellent cost-competitiveness", "High capacity factors, especially offshore", "Low operational emissions", "Efficient use of land (agriculture can coexist)"],
+                cons: ["Intermittent (requires wind)", "Visual and noise impact", "Potential impact on wildlife (e.g., birds)", "High initial investment for offshore projects"],
+                metrics: { cost: "$25 - $50", efficiency: "35% - 50% (of wind's power)", emissions: "7 - 15 gCO₂eq/kWh", bestUse: "Utility-scale power in regions with consistent wind." },
+                externalLink: "https://www.irena.org/wind",
+                personalAction: "Support policies that streamline responsible wind farm development. You can also invest in green energy funds that include wind power projects or choose an electricity provider that sources a high percentage of its power from wind."
+            },
+            {
+                id: 'geothermal-energy', name: 'Geothermal Energy', category: 'Geothermal',
+                svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zM4 12c0-4.418 3.582-8 8-8s8 3.582 8 8-3.582 8-8 8-8-3.582-8-8z" /><path stroke-linecap="round" stroke-linejoin="round" d="M7 15s1 2 5 2 5-2 5-2" />`,
+                description: `Geothermal energy taps into the heat stored within the Earth's core. This heat generates steam or heats underground water, which can be piped to the surface to spin turbines and generate electricity. For heating, hot water can be circulated directly through buildings. It is a highly reliable and consistent source of power, as it is not dependent on weather conditions, providing a stable baseload power supply.`,
+                pros: ["Highly reliable and consistent (baseload power)", "Small physical footprint on the surface", "Low emissions", "High capacity factor (>90%)"],
+                cons: ["Geographically limited to specific regions", "High upfront drilling costs", "Risk of inducing seismic activity (rare)", "Potential release of underground gases"],
+                metrics: { cost: "$60 - $100", efficiency: "10% - 20% (thermal to electric)", emissions: "5 - 45 gCO₂eq/kWh", bestUse: "Baseload electricity and direct heating in tectonically active areas." },
+                externalLink: "https://www.energy.gov/eere/geothermal/geothermal-energy-101",
+                personalAction: "If you live in a geothermally active region, advocate for local investment in geothermal power plants. For homeowners, ground source heat pumps (geothermal heating/cooling) are a highly efficient way to manage home climate, drastically reducing fossil fuel consumption."
+            },
+            {
+                id: 'nuclear-fission', name: 'Nuclear Fission', category: 'Core Generation',
+                svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M11 4a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V4zM6 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-1zM16 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1zM12 15a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />`,
+                description: `Nuclear fission generates heat by splitting atoms, typically uranium, in a process called nuclear fission. This heat is used to boil water, creating steam that drives turbines to produce electricity. It is a potent source of carbon-free, baseload power, meaning it can operate continuously for long periods, providing a stable and reliable energy supply regardless of weather conditions. Modern reactor designs have significantly enhanced safety features.`,
+                pros: ["Extremely high energy density", "Provides firm, reliable baseload power", "Very low greenhouse gas emissions", "Small land footprint"],
+                cons: ["Concerns over long-term waste disposal", "High construction costs and long build times", "Public perception and safety concerns", "Risk of accidents, though statistically very low"],
+                metrics: { cost: "$100 - $150", efficiency: "33% - 40%", emissions: "5 - 15 gCO₂eq/kWh", bestUse: "Providing large-scale, 24/7 carbon-free baseload power." },
+                externalLink: "https://www.iaea.org/topics/nuclear-power-reactors",
+                personalAction: "Engage in informed discussions about the role of nuclear power in the energy transition. Support research into advanced reactor designs and long-term waste solutions. Understanding the technology is key to forming a balanced perspective on its risks and benefits."
+            },
+            // II. Dispatchable & Storage
+            {
+                id: 'hydropower', name: 'Hydropower', category: 'Dispatchable & Storage',
+                svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M4 16c0-3.314 2.686-6 6-6s6 2.686 6 6M4 16s-2 0-2-2 2-2 2-2M16 16s2 0 2-2-2-2-2-2m-8 6h8" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v4m0 0l-2-2m2 2l2-2" />`,
+                description: `Hydropower harnesses the energy of flowing water to generate electricity. Typically, a dam is built to store water in a reservoir. When electricity is needed, water is released through turbines, causing them to spin and drive a generator. It's one of the oldest and largest sources of renewable energy, providing dispatchable power that can be ramped up or down quickly to meet demand, and the reservoirs can serve as a form of large-scale energy storage.`,
+                pros: ["Low operating costs", "Highly reliable and dispatchable (can be turned on/off)", "Long lifespan of facilities", "Provides energy storage and flood control"],
+                cons: ["High upfront construction costs", "Significant environmental and social impact (displacing communities, altering ecosystems)", "Geographically limited to river systems", "Vulnerable to droughts"],
+                metrics: { cost: "$40 - $80", efficiency: "85% - 90%", emissions: "5 - 20 gCO₂eq/kWh", bestUse: "Large-scale dispatchable power and grid stabilization." },
+                externalLink: "https://www.hydropower.org/about-hydropower",
+                personalAction: "Support sustainable hydropower projects that adhere to strict environmental and social standards. Advocate for the modernization of existing dams to improve efficiency and reduce ecological impact, rather than solely focusing on new large-scale projects."
+            },
+            {
+                id: 'battery-storage', name: 'Battery Storage', category: 'Dispatchable & Storage',
+                svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M10 21v-5m0 0V6a2 2 0 012-2h2a2 2 0 012 2v10m-4 0h4m-4 0a2 2 0 00-2 2h8a2 2 0 00-2-2" /><path stroke-linecap="round" stroke-linejoin="round" d="M10 3h4" />`,
+                description: `Battery energy storage systems (BESS) do not generate power but store electricity from other sources for later use. Lithium-ion batteries are the most common type, storing energy electrochemically. They are crucial for modern grids, as they can absorb excess power from intermittent renewables like solar and wind, and discharge it when generation is low or demand is high. This helps stabilize the grid, improve power quality, and enable a higher penetration of renewable energy.`,
+                pros: ["Enables grid stability", "Stores excess renewable energy", "Fast response time (milliseconds)", "Can be deployed at various scales"],
+                cons: ["High cost, though falling", "Limited duration of storage (typically a few hours)", "Concerns over raw material mining (lithium, cobalt)", "Degradation over time"],
+                metrics: { cost: "Varies (adds to generation cost)", efficiency: "85% - 95% (round-trip)", emissions: "Depends on stored energy source", bestUse: "Grid balancing, storing intermittent renewables, and providing backup power." },
+                externalLink: "https://www.energy.gov/energy-storage-grand-challenge",
+                personalAction: "For homeowners with solar panels, a home battery (like a Tesla Powerwall) can provide backup power and increase self-consumption of solar energy. At a broader level, support policies that incentivize utility-scale battery storage to create a more resilient and flexible grid."
+            },
+            {
+                id: 'green-hydrogen', name: 'Green Hydrogen', category: 'Dispatchable & Storage',
+                svg: `<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" font-weight="bold" fill="currentColor">H₂</text><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" fill="none" />`,
+                description: `Green Hydrogen (H₂) is produced through electrolysis, a process that uses renewable electricity to split water (H₂O) into hydrogen and oxygen. The resulting hydrogen is a clean, energy-dense fuel that produces only water when combusted or used in a fuel cell. It acts as an energy carrier, allowing renewable energy to be stored for long periods and transported. It is a promising solution for decarbonizing hard-to-abate sectors like heavy industry and long-haul transport.`,
+                pros: ["Versatile energy carrier", "Long-duration energy storage", "No carbon emissions at point of use", "Can decarbonize heavy industry and transport"],
+                cons: ["High production costs currently", "Lower round-trip efficiency than batteries", "Storage and transport challenges", "Requires massive build-out of renewable energy"],
+                metrics: { cost: "$100 - $200 (per MWh equivalent)", efficiency: "60% - 70% (electrolysis)", emissions: "Very low (if powered by renewables)", bestUse: "Long-duration storage, industrial feedstock, heavy transport fuel." },
+                externalLink: "https://www.iea.org/reports/global-hydrogen-review-2023",
+                personalAction: "Support government and corporate investment in green hydrogen research and infrastructure. As the technology matures, consider vehicles or home energy systems powered by hydrogen fuel cells where available and practical."
+            },
+            // III. Emerging Resources
+            {
+                id: 'ocean-energy', name: 'Ocean Energy', category: 'Emerging',
+                svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6.75a2.25 2.25 0 00-4.5 0v3.75a2.25 2.25 0 004.5 0v-3.75z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75a2.25 2.25 0 004.5 0v3.75a2.25 2.25 0 00-4.5 0v-3.75zM17.25 6.75a2.25 2.25 0 00-4.5 0v3.75a2.25 2.25 0 004.5 0v-3.75z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3 15.75c0-1.657 3.358-3 7.5-3s7.5 1.343 7.5 3" />`,
+                description: `Ocean energy encompasses several technologies that capture the power of the sea. Tidal energy uses the rise and fall of tides, often with underwater turbines that function like wind turbines. Wave energy converters capture the kinetic energy of ocean waves. While still in early stages of development, ocean energy is highly predictable and has immense potential to provide a consistent and reliable source of clean power.`,
+                pros: ["Highly predictable and consistent", "High energy density", "Minimal visual impact (for underwater systems)", "Vast global resource potential"],
+                cons: ["High costs and technical challenges", "Harsh marine environment is tough on equipment", "Potential impacts on marine ecosystems", "Limited large-scale deployments to date"],
+                metrics: { cost: "$150 - $300+", efficiency: "Varies greatly by tech", emissions: "~10 gCO₂eq/kWh", bestUse: "Coastal communities with strong tidal flows or wave activity." },
+                externalLink: "https://www.irena.org/Energy-Transition/Technology/Ocean",
+                personalAction: "Advocate for increased R&D funding for marine energy technologies. Support pilot projects and coastal policies that explore the potential of tidal and wave power in an environmentally responsible manner."
+            },
+            {
+                id: 'bioenergy', name: 'Bioenergy & Biogas', category: 'Emerging',
+                svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21V12.75a3.75 3.75 0 00-3.75-3.75h-1.5A3.75 3.75 0 004.5 12.75V21" /><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21a2.25 2.25 0 002.25-2.25V15a2.25 2.25 0 00-2.25-2.25h-1.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 10.5V9a2.25 2.25 0 012.25-2.25h1.5a2.25 2.25 0 012.25 2.25v1.5" />`,
+                description: `Bioenergy is derived from organic matter, known as biomass, such as agricultural waste, forestry residues, and dedicated energy crops. This biomass can be burned directly to produce heat and electricity or converted into liquid biofuels or biogas. Biogas is produced through the anaerobic digestion of organic waste (like manure or food scraps), creating a methane-rich gas that can be used for heating, cooking, or electricity generation. It is considered carbon-neutral as the carbon released was recently captured from the atmosphere by the plants.`,
+                pros: ["Uses waste materials", "Can provide dispatchable power", "Can be carbon-neutral or even carbon-negative", "Creates biofuels for transport"],
+                cons: ["Competition for land with food crops", "Potential for deforestation and biodiversity loss", "Emissions from combustion (particulates)", "Supply chain logistics can be complex"],
+                metrics: { cost: "$70 - $120", efficiency: "20% - 40% (electricity generation)", emissions: "20 - 230 gCO₂eq/kWh (lifecycle)", bestUse: "Utilizing agricultural/municipal waste, providing dispatchable power." },
+                externalLink: "https://www.ieabioenergy.com/",
+                personalAction: "Support local composting and waste-to-energy initiatives. If you have a farm or large garden, consider a small-scale biodigester. Advocate for policies that prioritize using genuine waste streams for bioenergy rather than dedicated crops that compete with food production."
+            },
+             // IV. System & Future
+            {
+                id: 'ccs', name: 'Carbon Capture & Storage', category: 'System & Future',
+                svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />`,
+                description: `Carbon Capture, Utilization, and Storage (CCUS) is a suite of technologies designed to capture CO₂ emissions from sources like power plants or industrial facilities. The captured CO₂ is then compressed and transported to be stored deep underground in geological formations or utilized to create products like concrete or fuels. While not an energy source itself, CCUS is a critical technology for mitigating emissions from existing fossil fuel infrastructure and hard-to-decarbonize industries like cement and steel production during the energy transition.`,
+                pros: ["Can decarbonize fossil fuel power plants", "Essential for industries with unavoidable process emissions", "Creates potential for carbon-negative bioenergy (BECCS)", "Can be retrofitted to existing facilities"],
+                cons: ["High cost and energy penalty", "Long-term storage security concerns", "Public perception and liability issues", "Doesn't address other pollutants from fossil fuels"],
+                metrics: { cost: "Adds $50-$100/MWh", efficiency: "Reduces plant output by 15-25%", emissions: "Captures 90%+ of CO₂", bestUse: "Industrial facilities, natural gas plants, bioenergy (BECCS)." },
+                externalLink: "https://www.iea.org/fuels-and-technologies/carbon-capture-utilisation-and-storage",
+                personalAction: "Support policies that fund CCUS research and development, particularly for industries where emissions are unavoidable. Engage in conversations that distinguish between using CCUS as a transitional tool for heavy industry versus an excuse to prolong the life of coal plants."
+            },
+            {
+                id: 'smart-grids', name: 'Smart Grids', category: 'System & Future',
+                svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5M19.5 8.25H21M19.5 12H21m-3.75 3.75H21m-9-1.5h.008v.008H12v-.008z" />`,
+                description: `A smart grid is a modernized electrical grid that uses information and communication technology to gather and act on information about the behavior of suppliers and consumers. This two-way communication allows it to automatically respond to changes in electricity demand and supply, detect and repair outages, and integrate distributed energy resources like rooftop solar and EVs more effectively. Demand response programs, a key feature, incentivize consumers to reduce energy use during peak hours, helping to balance the grid and reduce costs for everyone.`,
+                pros: ["Improves grid reliability and efficiency", "Facilitates high penetration of renewables", "Empowers consumers with data and control", "Reduces peak demand and need for new power plants"],
+                cons: ["High investment cost for utilities", "Cybersecurity and data privacy concerns", "Complexity of integration", "Requires new regulatory frameworks"],
+                metrics: { cost: "Grid upgrade investment", efficiency: "Increases overall system efficiency", emissions: "Reduces by optimizing generation", bestUse: "Modernizing entire electricity networks for the 21st century." },
+                externalLink: "https://www.energy.gov/gdo/smart-grid",
+                personalAction: "Participate in demand response programs offered by your utility. Using smart thermostats, EV chargers, and appliances that can shift their consumption to off-peak hours helps balance the grid. Advocate for local and national investment in grid modernization."
+            },
+            {
+                id: 'nuclear-fusion', name: 'Nuclear Fusion', category: 'System & Future',
+                svg: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 0a5 5 0 1 0 0 10 5 5 0 0 0 0-10z" />`,
+                description: `Nuclear fusion is the process that powers the sun. It involves combining light atomic nuclei, such as hydrogen isotopes, to form a heavier nucleus, releasing an immense amount of energy. If harnessed on Earth, fusion could provide a virtually limitless, safe, and clean source of power. The fuel is abundant (derived from water and lithium), and the process produces no long-lived radioactive waste or greenhouse gases. While significant scientific and engineering challenges remain, recent breakthroughs have brought the prospect of commercial fusion energy closer than ever.`,
+                pros: ["Virtually limitless fuel supply", "No greenhouse gas emissions", "No risk of meltdown or long-lived radioactive waste", "Extremely high energy density"],
+                cons: ["Extremely difficult to achieve and sustain", "Currently in the experimental stage", "Very high research and construction costs", "Commercial viability is still decades away"],
+                metrics: { cost: "N/A (Experimental)", efficiency: "Potentially very high", emissions: "Zero", bestUse: "The ultimate goal for clean, abundant, baseload power." },
+                externalLink: "https://www.iter.org/",
+                personalAction: "Stay informed about the progress of major fusion projects like ITER. Support public and private funding for fusion research, as it represents a long-term, transformative solution to humanity's energy and climate challenges. It's an investment in a cleaner future."
+            },
+        ];
+
+        const futureTechData = [
+            { name: "Green Hydrogen & Fuel Cells", description: "Beyond storage, Green Hydrogen is a cornerstone for decarbonizing heavy industry (steel, ammonia production) and long-haul transport (shipping, aviation). Fuel cells that convert hydrogen back to electricity with high efficiency will be critical. The primary challenge is reducing the cost of electrolysis through innovation and scaling up renewable energy capacity to power it." },
+            { name: "Microbial Cell Factories", description: "This branch of synthetic biology engineers microorganisms like bacteria and yeast to produce high-value chemicals and biofuels from renewable feedstocks. Instead of relying on petrochemical processes, these 'cell factories' can convert biomass or even waste CO₂ into sustainable fuels and materials, creating a circular carbon economy. The challenge lies in optimizing microbial strains for industrial-scale efficiency and yield." },
+            { name: "Advanced Battery Storage (LDS)", description: "While Lithium-ion batteries are excellent for short-duration storage (2-4 hours), the grid of the future needs Long-Duration Storage (LDS) to handle days or even weeks of low renewable generation. Emerging technologies include iron-air batteries, flow batteries (vanadium, zinc-bromide), and thermal storage systems. These aim to dramatically lower storage costs per kWh, making a 100% renewable grid a firm reality." },
+            { name: "Small Modular Reactors (SMRs)", description: "SMRs are a new class of nuclear fission reactors, typically defined as producing under 300 MWe. Their key advantage is that they can be factory-built and transported to a site, reducing construction time and costs. Their smaller size offers greater siting flexibility and they often feature advanced, passive safety systems. SMRs could provide reliable, carbon-free power for remote communities, industrial sites, or to complement renewable-heavy grids." },
+            { name: "Enhanced Geothermal Systems (EGS)", description: "Traditional geothermal power is limited to specific locations with natural hot water reservoirs. EGS aims to unlock geothermal energy anywhere by drilling deep into hot, dry rock and creating an artificial reservoir by injecting water. This 'fracking for heat' could make geothermal a widely available, firm, and clean energy source, but requires overcoming significant drilling and reservoir engineering challenges." }
+        ];
+
+        const careersData = [
+            { role: "Wind Turbine Technician", degrees: "Associate's Degree, Technical Cert.", skills: "Mechanical/Electrical repair, safety protocols", salary: "$50k - $75k", impact: "Directly maintains and operates clean energy generation assets, ensuring grid reliability." },
+            { role: "Solar Panel Installer", degrees: "High School, Certifications (NABCEP)", skills: "Construction, electrical wiring, teamwork", salary: "$45k - $65k", impact: "Empowers homes and businesses with distributed energy, reducing fossil fuel dependence at a local level." },
+            { role: "Grid Modernization Engineer", degrees: "Bachelor's/Master's in Electrical Eng.", skills: "Power systems, data analysis, cybersecurity", salary: "$80k - $130k+", impact: "Designs the smart grid of the future, enabling the integration of millions of renewable sources and EVs." },
+            { role: "Energy Policy Analyst", degrees: "Master's in Public Policy, Econ, Env. Science", skills: "Research, writing, economic modeling", salary: "$70k - $120k+", impact: "Shapes the regulations and incentives that accelerate the transition to clean energy at state and national levels." },
+            { role: "Materials Scientist (Batteries/PV)", degrees: "PhD in Chemistry, Mat. Science", skills: "Lab research, experimentation, data analysis", salary: "$90k - $150k+", impact: "Invents the next generation of more efficient, cheaper, and sustainable materials for solar panels and batteries." },
+        ];
+        
+        //======================================================================
+        // APP COMPONENTS
+        //======================================================================
+
+        const App = () => {
+            const [currentPage, setCurrentPage] = useState('home');
+
+            const navigateTo = (page) => {
+                setCurrentPage(page);
+                window.scrollTo(0, 0); // Scroll to top on page change
+            };
+
+            const renderPage = () => {
+                if (currentPage.startsWith('source-')) {
+                    const sourceId = currentPage.split('source-')[1];
+                    const source = energySourcesData.find(s => s.id === sourceId);
+                    return <EnergySourcePage source={source} navigateTo={navigateTo} />;
+                }
+
+                switch (currentPage) {
+                    case 'home': return <HomePage navigateTo={navigateTo} />;
+                    case 'intro': return <IntroPage navigateTo={navigateTo} />;
+                    case 'comparison': return <ComparisonPage navigateTo={navigateTo} />;
+                    case 'future-tech': return <FutureTechPage navigateTo={navigateTo} />;
+                    case 'global-snapshot': return <GlobalSnapshotPage navigateTo={navigateTo} />;
+                    case 'careers': return <CareersPage navigateTo={navigateTo} />;
+                    case 'personal-action': return <PersonalActionPage navigateTo={navigateTo} />;
+                    case 'contact': return <ContactPage navigateTo={navigateTo} />;
+                    default: return <HomePage navigateTo={navigateTo} />;
+                }
+            };
+            
+            return (
+                <div className="min-h-screen flex">
+                    <SidePanel />
+                    <div className="flex-1 lg:ml-64">
+                        <Header navigateTo={navigateTo} />
+                        <main className="p-4 sm:p-6 lg:p-8">
+                            {renderPage()}
+                        </main>
+                        <Footer />
+                    </div>
+                </div>
+            );
+        };
+
+        const SidePanel = () => (
+             <aside className="fixed top-0 left-0 h-full w-64 bg-zinc-800 text-white p-6 shadow-2xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-40 flex flex-col">
+                <div className="text-center mb-8">
+                    <h2 className="font-display text-4xl text-emerald-400">Hi!</h2>
+                    <p className="text-sm font-light mt-2">We’re VERTOS — Debshikha, Adriza & Anshdeep,</p>
+                </div>
+                <p className="text-xs text-zinc-300 leading-relaxed mb-8">
+                   Students of Lovely Professional University, where innovation meets sustainability:https://www.lpu.in/about-lpu/infrastructure.php
+LPU sets the standard for a climate-conscious campus — harnessing solar power, rainwater harvesting, green architecture, plastic-free and bicycle-friendly initiatives, and cutting-edge waste and air quality management.
+Students of Lovely Professional University, where innovation meets sustainability:
+Inspired by that vision, we’ve created this digital space to make sustainable energy accessible and engaging. Knowledge sparks change, and we hope this hub inspires you to take action toward a cleaner, shared future
+                </p>
+                <div className="mt-auto">
+                    <h3 className="text-lg font-semibold text-emerald-400 mb-4 border-b border-emerald-700 pb-2">Core Focus Areas</h3>
+                    <ul className="space-y-3">
+                        <li className="flex items-center">
+                            <svg className="w-5 h-5 mr-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                            <span>Education</span>
+                        </li>
+                        <li className="flex items-center">
+                             <svg className="w-5 h-5 mr-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4M17 3v4m-2-2h4m2 10v4m-2-2h4"></path></svg>
+                            <span>Innovation</span>
+                        </li>
+                        <li className="flex items-center">
+                             <svg className="w-5 h-5 mr-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            <span>Action</span>
+                        </li>
+                    </ul>
+                </div>
+            </aside>
+        );
+
+        const Header = ({ navigateTo }) => {
+            const [isOpen, setIsOpen] = useState(false);
+            const navLinks = [
+                { name: 'Home', page: 'home' },
+                { name: 'Introduction', page: 'intro' },
+                { name: 'Comparison', page: 'comparison' },
+                { name: 'Future Tech', page: 'future-tech' },
+                { name: 'Global Snapshot', page: 'global-snapshot' },
+                { name: 'Careers', page: 'careers' },
+                { name: 'Take Action', page: 'personal-action' },
+                { name: 'Contact', page: 'contact' },
+            ];
+            
+            return (
+                 <header className="sticky top-0 bg-white/80 backdrop-blur-sm z-30 shadow-md">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center justify-between h-16">
+                            <div className="flex items-center cursor-pointer" onClick={() => navigateTo('home')}>
+                                <svg className="w-8 h-8 text-forest-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                <span className="font-bold text-xl ml-2 text-dark-text">Energy Hub</span>
+                            </div>
+                            <div className="hidden md:block">
+                                <div className="ml-10 flex items-baseline space-x-4">
+                                    {navLinks.map(link => (
+                                        <a key={link.name} href="#" onClick={(e) => { e.preventDefault(); navigateTo(link.page); }} className="text-gray-600 hover:bg-green-100 hover:text-dark-text px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                            {link.name}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="-mr-2 flex md:hidden">
+                                <button onClick={() => setIsOpen(!isOpen)} type="button" className="bg-green-100 inline-flex items-center justify-center p-2 rounded-md text-forest-green hover:text-white hover:bg-forest-green focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                                    <span className="sr-only">Open main menu</span>
+                                    <svg className={`${isOpen ? 'hidden' : 'block'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                    <svg className={`${isOpen ? 'block' : 'hidden'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={`${isOpen ? 'block' : 'hidden'} md:hidden`}>
+                        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                            {navLinks.map(link => (
+                                <a key={link.name} href="#" onClick={(e) => { e.preventDefault(); navigateTo(link.page); setIsOpen(false); }} className="text-gray-600 hover:bg-green-100 hover:text-dark-text block px-3 py-2 rounded-md text-base font-medium transition-colors">
+                                    {link.name}
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                </header>
+            );
+        };
+        
+        const HomePage = ({ navigateTo }) => {
+            const categories = ['Core Generation', 'Dispatchable & Storage', 'Emerging', 'System & Future'];
+            const allTopics = [
+                ...energySourcesData,
+                { id: 'future-tech', name: 'Next-Gen Technologies', category: 'System & Future' },
+                { id: 'global-snapshot', name: 'Global Players', category: 'System & Future' }
+            ];
+
+            return (
+                <div>
+                    {/* Hero Section */}
+                    <div className="text-center py-16 px-4 rounded-xl abstract-bg mb-12">
+                        <h1 className="text-4xl md:text-6xl font-bold text-dark-text tracking-tight">Sustainable Energy Hub</h1>
+                        <p className="mt-4 text-lg md:text-xl text-gray-700 max-w-3xl mx-auto">Exploring clean, efficient, and climate-friendly power for our shared future 🌍.</p>
+                    </div>
+
+                    {/* Pioneers Section */}
+                    <div className="mb-16">
+                        <h2 className="text-2xl font-bold text-center mb-6 text-forest-green">Pioneers Presentation</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                            {pioneersData.map(pioneer => (
+                                <a href={pioneer.link} target="_blank" rel="noopener noreferrer" key={pioneer.name} className="p-4 bg-white rounded-lg shadow-md hover:shadow-xl hover:scale-105 transition-all">
+                                    <h3 className="font-semibold text-accent-blue">{pioneer.name}</h3>
+                                    <p className="text-sm text-gray-500">{pioneer.title}</p>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Energy Source Cards */}
+                    {categories.map(category => (
+                        <div key={category} className="mb-12">
+                            <h2 className="text-3xl font-bold mb-6 border-b-2 border-forest-green pb-2 text-gray-800">{category}</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {allTopics.filter(source => source.category === category).map(source => (
+                                    <div key={source.id} onClick={() => navigateTo(source.id.startsWith('source-') ? source.id : `source-${source.id}`)}
+                                         className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer transform hover:-translate-y-2 transition-transform duration-300 group">
+                                        <div className="p-6">
+                                            <div className="flex items-center mb-4">
+                                                <div className="p-3 bg-green-100 rounded-full mr-4">
+                                                    <svg className="w-6 h-6 text-forest-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        {React.createElement('g', { dangerouslySetInnerHTML: { __html: source.svg }})}
+                                                    </svg>
+                                                </div>
+                                                <h3 className="text-xl font-bold text-gray-800 group-hover:text-forest-green transition-colors">{source.name}</h3>
+                                            </div>
+                                            <p className="text-gray-600 text-sm">{source.description ? source.description.substring(0, 100) + '...' : 'Click to explore the key players and technologies shaping our world.'}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+        
+        const EnergySourcePage = ({ source }) => {
+            return (
+                <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+                    <div className="flex items-center mb-6">
+                         <div className="p-4 bg-green-100 rounded-full mr-6">
+                            <svg className="w-10 h-10 text-forest-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                {React.createElement('g', { dangerouslySetInnerHTML: { __html: source.svg }})}
+                            </svg>
+                        </div>
+                        <h1 className="text-4xl font-bold text-dark-text">{source.name}</h1>
+                    </div>
+                    
+                    <div className="prose prose-lg max-w-none text-gray-700 mb-8">
+                        <h2 className="text-2xl font-semibold text-forest-green border-b pb-2">How It Works</h2>
+                        <p>{source.description}</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <h3 className="text-xl font-semibold mb-2 text-green-700">Pros</h3>
+                            <ul className="list-disc list-inside space-y-1 text-gray-600">
+                                {source.pros.map((pro, i) => <li key={i}>{pro}</li>)}
+                            </ul>
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-semibold mb-2 text-red-600">Cons</h3>
+                             <ul className="list-disc list-inside space-y-1 text-gray-600">
+                                {source.cons.map((con, i) => <li key={i}>{con}</li>)}
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-6 rounded-lg mb-8">
+                        <h2 className="text-2xl font-semibold text-forest-green mb-4">Key Metrics</h2>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-gray-200">
+                                    <tr>
+                                        <th className="p-3">Cost ($/MWh)</th>
+                                        <th className="p-3">Efficiency</th>
+                                        <th className="p-3">Emissions (gCO₂eq/kWh)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="border-b">
+                                        <td className="p-3 font-mono">{source.metrics.cost}</td>
+                                        <td className="p-3 font-mono">{source.metrics.efficiency}</td>
+                                        <td className="p-3 font-mono">{source.metrics.emissions}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p className="mt-4"><strong className="text-gray-800">Best Use Case:</strong> {source.metrics.bestUse}</p>
+                    </div>
+
+                    <div className="bg-blue-50 p-6 rounded-lg mb-8">
+                        <h2 className="text-2xl font-semibold text-accent-blue mb-4">Making It Personal</h2>
+                        <p className="text-gray-700">{source.personalAction}</p>
+                    </div>
+                    
+                    <a href={source.externalLink} target="_blank" rel="noopener noreferrer"
+                       className="inline-block bg-forest-green text-white font-bold py-3 px-6 rounded-lg hover:bg-emerald-800 transition-colors">
+                       Learn More from a Legitimate Source 
+                    </a>
+                </div>
+            );
+        };
+        
+        const ComparisonPage = () => {
+             return (
+                <div className="max-w-6xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+                    <h1 className="text-4xl font-bold text-dark-text mb-6 text-center">Energy Source Comparison</h1>
+                    <p className="text-center text-gray-600 mb-8">A high-level overview of key metrics across different sustainable energy technologies. Values are typical estimates and can vary.</p>
+                    <div className="overflow-x-auto">
+                        <table className="w-full min-w-max text-left border-collapse">
+                            <thead>
+                                <tr className="bg-gray-200">
+                                    <th className="p-4 font-semibold text-sm">Energy Source</th>
+                                    <th className="p-4 font-semibold text-sm">Cost ($/MWh)</th>
+                                    <th className="p-4 font-semibold text-sm">Efficiency (%)</th>
+                                    <th className="p-4 font-semibold text-sm">Lifecycle Emissions (gCO₂eq/kWh)</th>
+                                    <th className="p-4 font-semibold text-sm">Recommended Use</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {energySourcesData.map(source => (
+                                    <tr key={source.id} className="border-b border-gray-200 hover:bg-green-50">
+                                        <td className="p-4 font-bold text-forest-green">{source.name}</td>
+                                        <td className="p-4 font-mono">{source.metrics.cost}</td>
+                                        <td className="p-4 font-mono">{source.metrics.efficiency}</td>
+                                        <td className="p-4 font-mono">{source.metrics.emissions}</td>
+                                        <td className="p-4 text-sm text-gray-700">{source.metrics.bestUse}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+             );
+        };
+
+        const FutureTechPage = () => {
+            return (
+                <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+                    <h1 className="text-4xl font-bold text-dark-text mb-2">Next Generation Future Technologies</h1>
+                    <p className="text-gray-600 mb-8">The energy landscape is constantly evolving. Here are some of the most promising technologies poised to revolutionize how we generate, store, and use clean energy in the coming decades.</p>
+                    
+                    <div className="space-y-8">
+                        {futureTechData.map((tech, index) => (
+                             <div key={index} className="p-6 border border-gray-200 rounded-lg bg-light-bg">
+                                <h2 className="text-2xl font-semibold text-forest-green mb-2">{tech.name}</h2>
+                                <p className="text-gray-700 leading-relaxed">{tech.description}</p>
+                             </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const GlobalSnapshotPage = () => {
+            return (
+                <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+                    <h1 className="text-4xl font-bold text-dark-text mb-2">Global Snapshot: Leaders in the Transition</h1>
+                    <p className="text-gray-600 mb-8">The transition to sustainable energy is a global effort, but some nations have emerged as leaders in deploying specific technologies, driven by geography, policy, and innovation.</p>
+
+                    <div className="space-y-6">
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                            <h2 className="text-xl font-semibold text-red-600 mb-1">🇨🇳 China: The Renewable Superpower</h2>
+                            <p>China is the world's largest producer of renewable energy, leading globally in installed capacity for both solar and wind power. Its massive manufacturing scale has been a key driver in reducing the global cost of solar panels, making clean energy more accessible worldwide.</p>
+                        </div>
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                            <h2 className="text-xl font-semibold text-blue-800 mb-1">🇳🇴 Norway: Hydropower Dominance</h2>
+                            <p>Thanks to its mountainous terrain and abundant rainfall, Norway generates over 95% of its electricity from hydropower. Its vast reservoirs also function like giant water batteries for Europe, helping to balance the grid as neighboring countries add more intermittent wind and solar.</p>
+                        </div>
+                         <div className="p-4 bg-gray-50 rounded-lg">
+                            <h2 className="text-xl font-semibold text-blue-600 mb-1">🇮🇸 Iceland: Geothermal and Hydro Pioneer</h2>
+                            <p>Situated on a tectonic plate boundary, Iceland is a global leader in geothermal energy, which provides heating for nearly all its buildings and a significant portion of its electricity. Combined with hydropower, the nation runs on nearly 100% renewable electricity.</p>
+                        </div>
+                        <div className="p-4 bg-gray-50 rounded-lg">
+                            <h2 className="text-xl font-semibold text-red-700 mb-1">🇺🇸 United States: Innovation and Scale</h2>
+                            <p>The U.S. is a leader across multiple fronts, including being the world's top producer of geothermal energy and having the second-largest installed capacity for both wind and solar. It is also a hub of innovation for next-generation technologies like advanced batteries, carbon capture, and nuclear fusion.</p>
+                        </div>
+                    </div>
+                    <div className="mt-8 p-4 text-center bg-green-100 rounded-lg">
+                        <p className="font-semibold">Note: A visual world map highlighting these trends and installed capacities will be added here soon.</p>
+                    </div>
+                </div>
+            );
+        };
+
+        const CareersPage = () => {
+            return (
+                <div className="max-w-5xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+                    <h1 className="text-4xl font-bold text-dark-text mb-2 text-center">Careers in Sustainable Energy</h1>
+                    <p className="text-center text-gray-600 mb-8">The clean energy transition is not just an environmental necessity; it's one of the greatest economic opportunities of our time. Here is a map of potential career pathways.</p>
+
+                    <div className="space-y-4">
+                        {careersData.map((career, index) => (
+                            <div key={index} className="grid md:grid-cols-4 gap-4 p-4 border rounded-lg hover:bg-gray-50">
+                                <div className="md:col-span-1">
+                                    <h2 className="text-lg font-bold text-forest-green">{career.role}</h2>
+                                    <p className="text-sm text-gray-500">{career.degrees}</p>
+                                </div>
+                                <div className="md:col-span-1">
+                                    <h3 className="font-semibold">Key Skills</h3>
+                                    <p className="text-sm">{career.skills}</p>
+                                </div>
+                                 <div className="md:col-span-1">
+                                    <h3 className="font-semibold">Salary Tier (Est. USD)</h3>
+                                    <p className="text-sm font-mono">{career.salary}</p>
+                                </div>
+                                <div className="md:col-span-1">
+                                    <h3 className="font-semibold">Impact</h3>
+                                    <p className="text-sm">{career.impact}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+        
+        const PersonalActionPage = () => (
+             <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+                <h1 className="text-4xl font-bold text-dark-text mb-2 text-center">Take Personal Action</h1>
+                <p className="text-center text-gray-600 mb-8">Large-scale change starts with individual choices. Here are clear, actionable steps you can take to contribute to a sustainable energy future and often save money in the process.</p>
+                
+                <div className="space-y-6">
+                    <div>
+                        <h2 className="text-2xl font-semibold text-forest-green mb-2">1. Reduce Consumption (Efficiency First)</h2>
+                        <p>The cheapest and cleanest unit of energy is the one you don't use. Focus on efficiency before anything else.</p>
+                        <ul className="list-disc list-inside mt-2 ml-4 text-gray-700 space-y-1">
+                            <li><strong>Switch to LEDs:</strong> Replace any remaining incandescent or CFL bulbs with LEDs. They use up to 80% less energy.</li>
+                            <li><strong>Seal Your Home:</strong> Check for drafts around windows and doors. Proper insulation and sealing can save 10-20% on heating and cooling costs.</li>
+                            <li><strong>Smart Thermostats:</strong> Install a programmable or smart thermostat to optimize your heating and cooling schedules automatically.</li>
+                             <li><strong>Energy Star Appliances:</strong> When replacing appliances, always look for the Energy Star label for top-tier efficiency.</li>
+                        </ul>
+                    </div>
+                     <div>
+                        <h2 className="text-2xl font-semibold text-forest-green mb-2">2. Electrify Your Life</h2>
+                        <p>Transitioning away from fossil fuels for heating, cooking, and transport is a powerful step.</p>
+                        <ul className="list-disc list-inside mt-2 ml-4 text-gray-700 space-y-1">
+                            <li><strong>Induction Stoves:</strong> Consider an induction cooktop when renovating. They are faster, safer, and more efficient than gas or traditional electric stoves.</li>
+                            <li><strong>Heat Pumps:</strong> For heating and cooling, heat pumps are incredibly efficient alternatives to furnaces and traditional air conditioners.</li>
+                            <li><strong>Electric Vehicles (EVs):</strong> If you're in the market for a new car, explore electric options. The total cost of ownership is often lower than gasoline cars due to fuel and maintenance savings.</li>
+                        </ul>
+                    </div>
+                     <div>
+                        <h2 className="text-2xl font-semibold text-forest-green mb-2">3. Choose Green Power</h2>
+                        <p>You can directly support renewable energy generation even without installing your own panels.</p>
+                        <ul className="list-disc list-inside mt-2 ml-4 text-gray-700 space-y-1">
+                            <li><strong>Rooftop Solar:</strong> If you're a homeowner, getting a quote for rooftop solar is the most direct way to generate clean power.</li>
+                            <li><strong>Community Solar:</strong> Many areas offer community solar programs, allowing you to "subscribe" to a portion of a local solar farm and get credit on your electricity bill.</li>
+                            <li><strong>Green Energy Tariffs:</strong> Check with your utility provider. Most offer a plan that allows you to pay a small premium to source your electricity from 100% renewable sources.</li>
+                        </ul>
+                    </div>
+                </div>
+             </div>
+        );
+        
+        const IntroPage = () => (
+            <div className="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl prose prose-lg">
+                <h1 className="text-4xl font-bold text-dark-text">Our Mission</h1>
+                <p>Welcome to the Sustainable Energy Hub. Our world stands at a critical juncture. The way we produce and consume energy is the single largest contributor to global climate change, yet it is also the key to our prosperity and progress. The transition to a sustainable energy system is not just an option—it is an imperative for the health of our planet and the well-being of future generations.</p>
+                <div className="grid grid-cols-2 gap-4 my-6 text-center">
+                    <div className="bg-green-100 p-4 rounded-lg">
+                        <div className="text-3xl font-bold text-forest-green">>70%</div>
+                        <div className="text-sm">of global GHG emissions come from the energy sector.</div>
+                    </div>
+                    <div className="bg-blue-100 p-4 rounded-lg">
+                        <div className="text-3xl font-bold text-accent-blue">90%</div>
+                        <div className="text-sm">of the electricity needed to reach net-zero can come from renewables.</div>
+                    </div>
+                </div>
+                <p>This encyclopedia is born from a simple belief: that clear, accessible, and comprehensive information is the catalyst for change. Our mission is to demystify the complex world of clean energy. We aim to go beyond the headlines, providing a deep dive into the technologies that will power our future—from the sun and wind to the very core of the Earth. We will analyze their efficiencies, costs, climate impacts, and global adoption trends, offering a balanced view of their potential and challenges.</p>
+                <p>Our goal is to inspire curiosity, foster optimism, and empower you with the knowledge to take personal action. Whether you are a student, a professional, a policymaker, or simply a concerned citizen, this hub is for you. Together, let's explore the path to a clean, efficient, and climate-friendly future.</p>
+            </div>
+        );
+
+        const ContactPage = () => (
+             <div className="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
+                <h1 className="text-4xl font-bold text-dark-text mb-2 text-center">Get In Touch</h1>
+                <p className="text-center text-gray-600 mb-8">Have a question, suggestion, or want to collaborate? We'd love to hear from you.</p>
+                <form className="space-y-6">
+                    <div>
+                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+                        <input type="text" name="name" id="name" className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-forest-green focus:border-forest-green" />
+                    </div>
+                     <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" name="email" id="email" className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-forest-green focus:border-forest-green" />
+                    </div>
+                     <div>
+                        <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label>
+                        <textarea id="message" name="message" rows="4" className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-forest-green focus:border-forest-green"></textarea>
+                    </div>
+                    <div>
+                        <button type="submit" className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-forest-green hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-forest-green transition-colors">
+                            Send Message
+                        </button>
+                    </div>
+                </form>
+             </div>
+        );
+        
+        const Footer = () => (
+            <footer className="bg-gray-800 text-white mt-12">
+                <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
+                    <p>&copy; {new Date().getFullYear()} Sustainable Energy Hub. All Rights Reserved.</p>
+                    <p className="text-sm text-gray-400 mt-2">Data sourced from IEA, IRENA, U.S. DOE, and other public domain resources.</p>
+                </div>
+            </footer>
+        );
+        
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+    
+    <div class="fixed bottom-5 right-5 z-50">
+      <div id="chat-window" class="chat-window hidden w-80 h-[450px] sm:w-96 sm:h-[600px] bg-white shadow-2xl flex flex-col rounded-xl overflow-hidden mb-4">
+        
+        <div class="bg-accent-blue text-white p-3 font-bold flex justify-between items-center">
+          AI Assistant
+          <button onclick="toggleChat(false)">×</button>
+        </div>
+
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-3 space-y-3 bg-gray-50 text-sm">
+          <div class="flex justify-start">
+            <div class="bg-blue-100 text-gray-800 p-2 rounded-br-xl rounded-tr-xl shadow-sm">
+              Hello! I'm your site assistant. Ask me anything about sustainable energy.
+            </div>
+          </div>
+        </div>
+
+        <div id="typing-indicator" class="p-2 text-xs text-gray-500 hidden flex items-center bg-white border-t">
+          <div class="w-2 h-2 bg-accent-blue rounded-full dot mr-1"></div>
+          <div class="w-2 h-2 bg-accent-blue rounded-full dot mr-1"></div>
+          <div class="w-2 h-2 bg-accent-blue rounded-full dot"></div>
+          <span class="ml-2">Typing...</span>
+        </div>
+
+        <div class="p-2 border-t flex space-x-2">
+          <input id="user-input" type="text" placeholder="Ask me anything..."
+                 class="flex-1 border rounded-full px-3 py-2 text-sm focus:ring-2 focus:ring-accent-blue"
+                 onkeypress="if(event.key==='Enter') sendMessage()">
+          <button onclick="sendMessage()" id="send-button" class="bg-accent-blue text-white px-4 rounded-full hover:bg-blue-700 transition">
+            Send
+          </button>
+        </div>
+      </div>
+
+      <button id="chat-toggle-button"
+              onclick="toggleChat()"
+              class="bg-accent-blue text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+      </button>
+    </div>
+    <script>
+    const apiKey = "AIzaSyA2NLrSThEQZ_MHGsowQFkiwUa8KEyqKHM"; // <-- IMPORTANT: Replace with your Gemini API key
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+    const chatWindow = document.getElementById('chat-window');
+    const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const chatToggle = document.getElementById('chat-toggle-button');
+
+    let chatHistory = [];
+    let isProcessing = false;
+    let isChatOpen = false;
+
+    function toggleChat(forceState) {
+      isChatOpen = forceState !== undefined ? forceState : !isChatOpen;
+      if (isChatOpen) {
+        chatWindow.classList.remove('hidden');
+        userInput.focus();
+        scrollToBottom();
+      } else {
+        chatWindow.classList.add('hidden');
+      }
+    }
+
+    function scrollToBottom() {
+      setTimeout(() => {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }, 100);
+    }
+
+    function addMessage(text, sender) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `flex ${sender==='user'?'justify-end':'justify-start'}`;
+      const bubble = document.createElement('div');
+      bubble.className = `max-w-[75%] p-2 shadow-sm rounded-lg ${
+        sender==='user' ? 'bg-accent-blue text-white rounded-bl-lg' : 'bg-blue-100 text-gray-800 rounded-br-lg'
+      }`;
+      bubble.innerHTML = text; // Using innerHTML to render markdown if needed in the future
+      messageDiv.appendChild(bubble);
+      chatMessages.appendChild(messageDiv);
+      scrollToBottom();
+    }
+
+    async function sendMessage() {
+      if (isProcessing) return;
+      const message = userInput.value.trim();
+      if (!message) return;
+
+      addMessage(message, 'user');
+      userInput.value = '';
+      chatHistory.push({ role: 'user', parts: [{ text: message }] });
+
+      isProcessing = true;
+      typingIndicator.classList.remove('hidden');
+
+      try {
+        const payload = {
+          contents: chatHistory,
+          systemInstruction: { parts: [{ text: "You are a friendly, concise site assistant for a website about sustainable energy. Keep replies short, encouraging, and focused on the topic of clean energy." }] }
+        };
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I can't respond right now.";
+        addMessage(reply, 'ai');
+        chatHistory.push({ role: 'model', parts: [{ text: reply }] });
+      } catch (err) {
+        console.error(err);
+        addMessage("⚠️ Error: Couldn't connect to AI service.", 'ai');
+      } finally {
+        isProcessing = false;
+        typingIndicator.classList.add('hidden');
+      }
+    }
+    </script>
+    </body>
+</html>
